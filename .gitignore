@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Odoo runtime
+*.log
+*.pid
+*.sock
+
+# Virtual environment
+venv/
+.env
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Node / Assets cache
+node_modules/
