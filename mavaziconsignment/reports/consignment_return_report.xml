@@ -1,0 +1,44 @@
+<odoo>
+    <template id="report_consignment_return_document">
+        <t t-call="web.basic_layout">
+            <t t-foreach="docs" t-as="o">
+                <div class="page">
+                    <h2>Consignment Return: <span t-esc="o.name"/></h2>
+                    <p>Vendor: <span t-esc="o.vendor_id.name"/></p>
+                    <p>Purchase Order: <span t-esc="o.purchase_id.name"/></p>
+                    <p>Date: <span t-esc="o.date"/></p>
+                    <table class="table table-condensed">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>Qty</th>
+                                <th>Unit Price</th>
+                                <th>Return Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="o.line_ids" t-as="l">
+                                <td t-esc="l.product_id.display_name"/>
+                                <td t-esc="l.quantity"/>
+                                <td t-esc="l.unit_price"/>
+                                <td t-esc="l.return_value"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p>Total Return Value: <span t-esc="o.total_return_value"/></p>
+                    <p>Notes: <span t-esc="o.note"/></p>
+                </div>
+            </t>
+        </t>
+    </template>
+
+    <report
+        id="consignment_return_report"
+        model="consignment.return"
+        string="Consignment Return"
+        report_type="qweb-pdf"
+        name="mavaziconsignment.report_consignment_return_document"
+        file="mavaziconsignment.report_consignment_return_document"
+        print_report_name="'ConsignmentReturn_' + object.name"
+    />
+</odoo>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mpesa_config_form" model="ir.ui.view">
+        <field name="name">mpesa.config.form</field>
+        <field name="model">mpesa.config</field>
+        <field name="arch" type="xml">
+            <form string="Mpesa API Configuration">
+                <header>
+                    <button name="action_register_url" 
+                            string="Register C2B URLs" 
+                            type="object" 
+                            class="oe_highlight" 
+                            invisible="mpesa_env != 'production'"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" placeholder="e.g. Production Account"/></h1>
+                    </div>
+                    <group>
+                        <group string="API Credentials">
+                            <field name="mpesa_env" widget="radio" options="{'horizontal': true}"/>
+                            <field name="consumer_key"/>
+                            <field name="consumer_secret" password="1"/>
+                            <field name="passkey" password="1"/>
+                        </group>
+                        <group string="Business Details">
+                            <field name="business_shortcode" placeholder="Till or Paybill Number"/>
+                            <field name="callback_url" placeholder="https://yourdomain.com"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Instructions" name="instructions">
+                            <div class="alert alert-info" role="alert">
+                                <strong>Note:</strong> Ensure your Callback URL is <strong>HTTPS</strong>. 
+                                For C2B (Direct Payments), you must click <strong>Register C2B URLs</strong> 
+                                after entering your credentials.
+                            </div>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    </odoo>

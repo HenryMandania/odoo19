@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="consignment_sales_report_pdf" model="ir.actions.report">
+        <field name="name">Consignment Sales Report (PDF)</field>
+        <field name="model">consignment.sales.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">mavaziconsignment.report_consignment_sales_template</field>
+        <field name="report_file">mavaziconsignment.report_consignment_sales_template</field>
+        <field name="print_report_name">'Consignment_Sales_%s' % (object.date_from)</field>
+    </record>
+
+    <record id="consignment_sales_report_web" model="ir.actions.report">
+        <field name="name">Consignment Sales Report (Web)</field>
+        <field name="model">consignment.sales.report.wizard</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">mavaziconsignment.report_consignment_sales_template</field>
+    </record>
+
+    <template id="report_consignment_sales_template">
+        <t t-call="web.html_container">
+            <t t-call="web.external_layout">
+                <div class="page">
+                    <div class="oe_structure"/>
+                    <h2 class="text-center">Consignment Sales Report</h2>
+
+                    <div class="row mt32 mb32">
+                        <div class="col-3">
+                            <strong>Date From:</strong> <p t-esc="date_from"/>
+                        </div>
+                        <div class="col-3">
+                            <strong>Date To:</strong> <p t-esc="date_to"/>
+                        </div>
+                        <div class="col-3">
+                            <strong>Vendor Filter:</strong> <p t-esc="vendor"/>
+                        </div>
+                        <div class="col-3">
+                            <strong>Product Filter:</strong> <p t-esc="product"/>
+                        </div>
+                    </div>
+
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr class="border-black">
+                                <th>Vendor</th> <th>Item Number</th>
+                                <th>Item Name</th>
+                                <th class="text-end">Qty Sold</th>
+                                <th class="text-end">Net Sales</th>
+                                <th class="text-end">VAT Amount</th>
+                                <th class="text-end">Gross Sales</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="lines" t-as="l">
+                                <tr>
+                                    <td><span t-esc="l['vendor_name']"/></td> <td><span t-esc="l['item_number']"/></td>
+                                    <td><span t-esc="l['item_name']"/></td>
+                                    <td class="text-end"><span t-esc="l['qty_sold']"/></td>
+                                    <td class="text-end"><span t-esc="l['net_sales']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/></td>
+                                    <td class="text-end"><span t-esc="l['vat_amount']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/></td>
+                                    <td class="text-end"><span t-esc="l['gross_amount']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/></td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <tfoot class="border-black">
+                            <tr style="font-weight:bold;">
+                                <td colspan="3">TOTAL</td> <td class="text-end"><span t-esc="totals['qty_sold']"/></td>
+                                <td class="text-end"><span t-esc="totals['net_sales']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/></td>
+                                <td class="text-end"><span t-esc="totals['vat_amount']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/></td>
+                                <td class="text-end"><span t-esc="totals['gross_amount']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

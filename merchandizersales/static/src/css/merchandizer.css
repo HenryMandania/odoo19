@@ -1,0 +1,56 @@
+.merchandizer_kanban {
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.merchandizer_kanban:hover {
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16);
+}
+
+.oe_kanban_footer_left {
+    font-size: 12px;
+    color: #666;
+}
+
+.oe_kanban_footer_right {
+    font-size: 14px;
+    font-weight: bold;
+    color: #714B67;
+}
+
+/* Popup styling */
+.merchandizer-popup {
+    min-width: 400px;
+    max-width: 600px;
+}
+
+.merchandizer-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    cursor: pointer;
+}
+
+.merchandizer-item:hover {
+    background-color: #f5f5f5;
+}
+
+.merchandizer-item.selected {
+    background-color: #e3f2fd;
+    border-left: 4px solid #1976d2;
+}
+
+.merchandizer-code {
+    font-weight: bold;
+    color: #1976d2;
+}
+
+.merchandizer-name {
+    font-size: 14px;
+}
+
+.merchandizer-mobile {
+    font-size: 12px;
+    color: #666;
+}

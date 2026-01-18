@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- List View for Consignment Return -->
+    <record id="view_consignment_return_tree" model="ir.ui.view">
+        <field name="name">consignment.return.list</field>
+        <field name="model">consignment.return</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'draft'">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="vendor_id"/>
+                <field name="purchase_id"/>
+                <field name="total_return_value"/>
+                <field name="state" widget="statusbar"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View (line_ids already uses list) -->
+    <record id="view_consignment_return_form" model="ir.ui.view">
+        <field name="name">consignment.return.form</field>
+        <field name="model">consignment.return</field>
+        <field name="arch" type="xml">
+            <form string="Consignment Return">
+                <header>
+                    <button name="action_confirm"
+                            type="object"
+                            string="Confirm"
+                            class="btn-primary"
+                            invisible="state != 'draft'"/>
+                    <button name="print_return"
+                            type="object"
+                            string="Print"
+                            class="btn-secondary"
+                            readonly="state != 'confirmed'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+
+                <sheet>
+                    <group>
+                        <field name="name" readonly="1"/>
+                        <field name="date" readonly="state == 'confirmed'"/>
+                        <field name="vendor_id" readonly="state == 'confirmed'"/>
+                        <field name="purchase_id" readonly="state == 'confirmed'"/>
+                        <field name="total_return_value" readonly="1"/>
+                    </group>
+
+                    <notebook>
+                        <page string="Returned Items">
+                            <field name="line_ids" mode="list,form" readonly="state == 'confirmed'">
+                                <list editable="bottom">
+                                    <field name="product_id"/>
+                                    <field name="quantity"/>
+                                    <field name="price_unit"/>
+                                    <field name="price_subtotal"/>
+                                    <field name="remaining_qty"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Notes">
+                            <field name="note" placeholder="Add internal notes here..." />
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_consignment_return" model="ir.actions.act_window">
+        <field name="name">Consignment Returns</field>
+        <field name="res_model">consignment.return</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Consignment Return
+            </p>
+        </field>
+    </record>
+
+    <!-- Menus -->
+    <menuitem id="menu_consignment_root"
+              name="Consignment"
+              parent="purchase.menu_purchase_root"
+              sequence="25"/>
+
+    <menuitem id="menu_consignment_return"
+              name="Returns"
+              parent="menu_consignment_root"
+              action="action_consignment_return"
+              sequence="10"/>
+
+</odoo>

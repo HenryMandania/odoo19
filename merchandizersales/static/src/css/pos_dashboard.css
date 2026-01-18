@@ -1,0 +1,173 @@
+/* POS Dashboard Header Styling */
+.pos-dashboard-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 25px;
+}
+
+.pos-dashboard-header h2 {
+    color: white;
+    font-weight: 600;
+    font-size: 1.8rem;
+}
+
+.dashboard-actions .btn-primary {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 10px 20px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.dashboard-actions .btn-primary:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.merchandizer-header-section {
+    margin-left: auto;
+    margin-right: 20px;
+}
+
+.merchandizer-register-btn {
+    color: #714B67 !important;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    background-color: rgba(113, 75, 103, 0.1);
+    transition: all 0.3s ease;
+    border: none;
+    text-decoration: none;
+}
+
+.merchandizer-register-btn:hover {
+    background-color: rgba(113, 75, 103, 0.2);
+    text-decoration: none;
+    color: #5a3a52 !important;
+}
+
+.merchandizer-quick-access .btn-outline-primary {
+    color: #714B67;
+    border-color: #714B67;
+    padding: 6px 12px;
+    font-size: 0.875rem;
+}
+
+.merchandizer-quick-access .btn-outline-primary:hover {
+    background-color: #714B67;
+    color: white;
+}
+
+/* Mavazi OPS Branding */
+.mavazi-ops-brand {
+    display: flex;
+    align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.mavazi-ops-brand .brand-logo {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.2rem;
+    margin-right: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.mavazi-ops-brand .brand-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Enhanced TILL Cards */
+.pos-dashboard .col-md-6 {
+    margin-bottom: 20px;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    border-bottom: 1px solid #e0e0e0;
+    padding: 15px 20px;
+    font-weight: 600;
+    color: #333;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.btn-continue-selling {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-continue-selling:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Stats styling */
+.stats-item {
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #f8f9fa;
+    margin-top: 10px;
+}
+
+.stats-value {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #714B67;
+}
+
+.stats-label {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+/* Search box styling */
+.pos-search-box {
+    margin-bottom: 20px;
+}
+
+.pos-search-box input {
+    border-radius: 25px;
+    padding: 12px 20px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.pos-search-box input:focus {
+    border-color: #764ba2;
+    box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+}

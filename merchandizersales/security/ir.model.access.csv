@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_x_merchandizer_sales_user,x_merchandizer.sales_user,model_x_merchandizer_sales,base.group_user,1,1,1,0
+access_x_merchandizer_sales_manager,x_merchandizer.sales_manager,model_x_merchandizer_sales,base.group_system,1,1,1,1
+access_sales_staff_report_wizard,sales.staff.report.wizard,model_sales_staff_report_wizard,base.group_user,1,1,1,1
