@@ -1,0 +1,51 @@
+<odoo>
+    <!-- Action to open list/form -->
+    <record id="action_customer_pin_register" model="ir.actions.act_window">
+        <field name="name">Customer Pin</field>
+        <field name="res_model">customer.pin.register</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- Submenu linking to action -->
+<menuitem id="menu_customer_pin_register"
+          name="Customer Pin List"
+          parent="point_of_sale.menu_point_root"
+          action="action_customer_pin_register"
+          sequence="91"/>
+
+  
+
+    <!-- List View -->
+    <record id="view_customer_pin_register_list" model="ir.ui.view">
+        <field name="name">customer.pin.register.list</field>
+        <field name="model">customer.pin.register</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="mobile"/>
+                <field name="kra_pin"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_customer_pin_register_form" model="ir.ui.view">
+        <field name="name">customer.pin.register.form</field>
+        <field name="model">customer.pin.register</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="mobile"/>
+                        </group>
+                        <group>
+                            <field name="kra_pin"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

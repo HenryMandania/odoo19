@@ -21,9 +21,7 @@
                 <sheet>
                     <div class="oe_title">
                         <label for="name"/>
-                        <h1>
-                            <field name="name" placeholder="e.g. John Doe"/>
-                        </h1>
+                        <h1><field name="name" placeholder="e.g. John Doe"/></h1>
                     </div>
                     <group>
                         <group>
@@ -39,29 +37,12 @@
         </field>
     </record>
 
-    <record id="view_x_merchandizer_sales_search" model="ir.ui.view">
-        <field name="name">x_merchandizer.sales.search</field>
-        <field name="model">x_merchandizer.sales</field>
-        <field name="arch" type="xml">
-            <search string="Search Merchandizer">
-                <field name="code"/>
-                <field name="name"/>
-                <field name="mobile"/>
-                <separator/>
-                <filter name="active" string="Active" domain="[('active', '=', True)]"/>
-                <filter name="inactive" string="Inactive" domain="[('active', '=', False)]"/>
-            </search>
-        </field>
-    </record>
-
     <record id="action_merchandizer" model="ir.actions.act_window">
         <field name="name">Merchandizers</field>
         <field name="res_model">x_merchandizer.sales</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Add your first merchandizer
-            </p>
+            <p class="o_view_nocontent_smiling_face">Add your first merchandizer</p>
         </field>
     </record>
 

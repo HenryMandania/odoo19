@@ -1,21 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="point_of_sale.menu_report_pos_order_all" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
 
-<record id="action_report_merchandizer_pdf" model="ir.actions.report">
-    <field name="name">Merchandizer Sales Report (PDF)</field>
-    <field name="model">sales.staff.report.wizard</field>
-    <field name="report_type">qweb-pdf</field>
-    <field name="report_name">merchandizersales.report_sales_staff_template</field>
-    <field name="report_file">merchandizersales.report_sales_staff_template</field>
-    <field name="binding_model_id" ref="model_sales_staff_report_wizard"/>
-    <field name="binding_type">report</field>
-</record>
-
-    <record id="action_report_merchandizer_web" model="ir.actions.report">
-        <field name="name">Merchandizer Sales Report (Web)</field>
+    <record id="action_report_merchandizer_pdf" model="ir.actions.report">
+        <field name="name">Merchandizer Sales Report (PDF)</field>
         <field name="model">sales.staff.report.wizard</field>
-        <field name="report_type">qweb-html</field>
+        <field name="report_type">qweb-pdf</field>
         <field name="report_name">merchandizersales.report_sales_staff_template</field>
+        <field name="report_file">merchandizersales.report_sales_staff_template</field>
+        <field name="binding_model_id" ref="model_sales_staff_report_wizard"/>
+        <field name="binding_type">report</field>
     </record>
 
     <record id="action_merchandizer_report_wizard" model="ir.actions.act_window">
@@ -25,25 +21,16 @@
         <field name="target">new</field>
     </record>
 
-    <menuitem
-        id="menu_merchandizer_list"
-        name="Merchandizers"
-        parent="point_of_sale.menu_point_root"
-        action="action_merchandizer"
-        sequence="90"
-    />
-
     <menuitem 
         id="menu_merchandizer_reporting_root"
         name="Merchandizer Reports"
-        parent="point_of_sale.menu_point_root"
-        sequence="100"/>
+        parent="point_of_sale.menu_point_rep"
+        sequence="10"/>
 
     <menuitem 
         id="menu_report_merchandizer_wizard"
-        name="Sales Analysis"
+        name="Merchandizer Sales Analysis"
         parent="menu_merchandizer_reporting_root"
         action="action_merchandizer_report_wizard"
         sequence="10"/>
-
 </odoo>

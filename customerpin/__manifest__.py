@@ -1,17 +1,20 @@
 {
-    "name": "Customer PIN",
+    "name": "Customer PIN in POS",
     "version": "1.0",
-    "category": "Point of Sale",
-    "summary": "Add PIN button with F9 shortcut in POS",
-    "depends": ["point_of_sale"],
+    "depends": ["point_of_sale", "sale"],   
+    "data": [
+        "security/ir.model.access.csv",
+        "views/customer_pin_register.xml",    
+        "views/customer_pin_report.xml", 
+          
+    ],
     "assets": {
         "point_of_sale._assets_pos": [
-            "customerpin/static/src/js/product_screen.js",
-           
-            "customerpin/static/src/xml/product_screen.xml",
+            "customerpin/static/src/js/product_screen.js",       
+            "customerpin/static/src/js/customer_pin_popup.js",  
+            "customerpin/static/src/xml/product_screen.xml",     
+            "customerpin/static/src/xml/customer_pin_popup.xml"  
              
-        ]
+        ],
     },
-    "installable": True,
-    "application": False,
 }

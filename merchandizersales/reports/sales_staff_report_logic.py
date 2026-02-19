@@ -12,18 +12,19 @@ class MerchandizerSalesReport(models.AbstractModel):
         
         form = data.get('form', {}) if data else {}
         
-        # --- CRASH-PROOF ID VALIDATION ---
-        # browse().exists() removes any IDs (like 27) that are not in the database
+        # --- CRASH-PROOF ID VALIDATION (Updated for x_merchandizer.sales) ---
+        # browse().exists() filters out IDs (like 36) that no longer exist in the DB
         staff_ids_raw = form.get('staff_ids', [])
         product_ids_raw = form.get('product_ids', [])
         
-        staff_records = self.env['hr.employee'].sudo().browse(staff_ids_raw).exists()
+        # We target your custom model specifically to fix the "Administrator" name issue
+        staff_records = self.env['x_merchandizer.sales'].sudo().browse(staff_ids_raw).exists()
         product_records = self.env['product.product'].sudo().browse(product_ids_raw).exists()
 
-        # Safely get names for the header
-        staff_names = ", ".join(staff_records.mapped('name')) if staff_records else "All Staff"
+        # Safely get names for the header - this fixes the red box in your screenshot
+        staff_names = ", ".join(staff_records.mapped('name')) if staff_records else "All Merchandizers"
         product_names = ", ".join(product_records.mapped('name')) if product_records else "All Products"
-        # ---------------------------------
+        # -------------------------------------------------------------------
 
         domain = [
             ('order_id.date_order', '>=', form.get('date_from')),
@@ -32,12 +33,13 @@ class MerchandizerSalesReport(models.AbstractModel):
             ('merchandizer_id', '!=', False), 
         ]
 
+        # Apply filters only if valid records exist
         if staff_records:
             domain.append(('merchandizer_id', 'in', staff_records.ids))
         if product_records:
             domain.append(('product_id', 'in', product_records.ids))
 
-        # Fetch lines and ensure the merchandizer still exists in the DB
+        # Fetch lines and double-check merchandizer existence
         lines = self.env['pos.order.line'].sudo().search(domain).filtered(lambda l: l.merchandizer_id.exists())
         
         grouped_data = {}
@@ -54,7 +56,7 @@ class MerchandizerSalesReport(models.AbstractModel):
                     'products': {} 
                 }
             
-            # Financials
+            # Financial Calculations
             grouped_data[m_id]['net'] += line.price_subtotal
             grouped_data[m_id]['gross'] += line.price_subtotal_incl
             grouped_data[m_id]['tax'] += (line.price_subtotal_incl - line.price_subtotal)
@@ -75,7 +77,7 @@ class MerchandizerSalesReport(models.AbstractModel):
         
         for staff_id, values in grouped_data.items():
             product_list = list(values['products'].values())
-            # Sum quantities from the ACTUAL processed list
+            # Sum quantities from the processed lines
             total_qty_sum += sum(p['qty'] for p in product_list)
             
             values['products'] = product_list
@@ -94,6 +96,6 @@ class MerchandizerSalesReport(models.AbstractModel):
                 'net': sum(x['net'] for x in final_lines), 
                 'tax': sum(x['tax'] for x in final_lines), 
                 'gross': sum(x['gross'] for x in final_lines),
-                'qty': total_qty_sum # Fixes the 3.0 vs 6.0 mismatch
+                'qty': total_qty_sum
             },
         }

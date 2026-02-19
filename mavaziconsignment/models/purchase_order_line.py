@@ -20,10 +20,11 @@ class PurchaseOrderLine(models.Model):
                 vendor_names = ', '.join(allowed_vendors.mapped('name'))
                 raise ValidationError(_("RESTRICTED ITEM: '%s' can only be purchased from: %s.") % (line.product_id.display_name, vendor_names))
 
-    @api.depends('product_qty', 'move_ids.state', 'move_ids.product_uom_qty')
-    def _compute_qty_received(self):
-        super()._compute_qty_received()
-        for line in self:
-            # Change x_is_consignment to is_consignment
-            if line.product_id.product_tmpl_id.is_consignment:
-                line.qty_received = line.product_qty
+@api.depends('product_qty', 'move_ids.state', 'move_ids.product_uom_qty')
+def _compute_qty_received(self):
+    super()._compute_qty_received()
+
+    for line in self:
+        tmpl = line.product_id.product_tmpl_id if line.product_id else False
+        if tmpl and tmpl.x_is_consignment:
+            line.qty_received = line.product_qty

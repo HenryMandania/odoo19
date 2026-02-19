@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="customerpin.CustomerPinPopup">
+        <div class="popup popup-text">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><t t-esc="props.title"/></h5>
+            </div>
+            <div class="modal-body">
+                <p t-if="props.body"><t t-esc="props.body"/></p>
+                <input type="password" t-model="state.code" class="form-control" t-ref="input"/>
+            </div>
+            <div class="footer modal-footer">
+                <div class="button confirm btn btn-success" t-on-click="confirm">
+                    Confirm
+                </div>
+                <div class="button cancel btn btn-secondary" t-on-click="cancel">
+                    Cancel
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

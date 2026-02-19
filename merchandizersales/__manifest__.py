@@ -17,7 +17,7 @@
             'merchandizersales/static/src/js/merchandizer_pos.js',
             'merchandizersales/static/src/xml/merchandizer_window.xml',
             'merchandizersales/static/src/xml/merchandizer_product_screen.xml',
-            'merchandizersales/static/src/css/merchandizer_window.css',
+             
         ],
     },
     'installable': True,

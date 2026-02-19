@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_customer_pin_register_user,access.customer.pin.register.user,model_customer_pin_register,base.group_user,1,1,1,1
+access_customer_pin_report_wizard_user,access.customer.pin.report.wizard.user,model_customer_pin_report_wizard,base.group_user,1,1,1,1
