@@ -1,0 +1,17 @@
+<odoo>
+    <record id="view_partner_form_inventory_vendor" model="ir.ui.view">
+        <field name="name">res.partner.form.inventory.vendor</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='company_type']" position="after">
+                <div class="o_row">
+                    <field name="inventory_vendor"/>
+                    <label for="inventory_vendor"/>
+                </div>
+            </xpath>
+
+        </field>
+    </record>
+</odoo>

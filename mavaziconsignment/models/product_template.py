@@ -10,30 +10,34 @@ class ProductTemplate(models.Model):
         default=False
     )
 
-    @api.onchange('x_is_consignment')
-    def _onchange_x_is_consignment(self):
-        if self.x_is_consignment:
-            self.type = 'consu'
-
     @api.constrains('seller_ids', 'purchase_ok')
     def _check_vendor_mandatory(self):
+        """Ensures every purchasable product has a vendor assigned."""
         for product in self:
-            if not product.seller_ids:
+            if product.purchase_ok and not product.seller_ids:
                 raise ValidationError(
                     _("STRICT VENDOR POLICY: Product '%s' must have at least one vendor assigned.")
                     % product.display_name
                 )
 
-    @api.onchange('x_is_consignment')
-    def _onchange_x_is_consignment(self):
+    @api.onchange('x_is_consignment', 'seller_ids')
+    def _onchange_consignment_tracking_logic(self):
+        """
+        Automates Inventory settings:
+        - If Consignment + Standard Vendor: Consumable, No Tracking.
+        - If Consignment + Inventory Vendor: Storable, Lot Tracking.
+        """
         for product in self:
+            # Check the custom field from your res_partner.py
+            force_tracking = any(s.partner_id.inventory_vendor for s in product.seller_ids if s.partner_id)
+            
             if product.x_is_consignment:
-                # Make it consumable automatically
-                product.type = 'consu'
-                # Disable tracking
-                product.tracking = 'none'
+                if force_tracking:
+                    product.type = 'product'  # Storable Product
+                    product.tracking = 'lot'  # By Lots
+                else:
+                    product.type = 'consu'    # Consumable
+                    product.tracking = 'none' # No Tracking
             else:
-                # Optionally reset to default tracking if unchecked
-                product.tracking = 'lot'  # or 'none' depending on your default policy
-
-    
+                # Default back to Storable when consignment is off
+                product.type = 'product'

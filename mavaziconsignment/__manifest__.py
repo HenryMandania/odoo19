@@ -21,6 +21,8 @@
         'security/ir.model.access.csv',
         'data/ir_sequence_data.xml',
         'views/product_views.xml',
+        'views/res_partner_views.xml',
+        'reports/consignment_return_report.xml',
         'views/consignment_return_views.xml', 
         'views/consignment_sales_report_views.xml',
         'reports/consignment_sales_report_template.xml', 
