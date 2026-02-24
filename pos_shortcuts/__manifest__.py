@@ -7,6 +7,7 @@
         'point_of_sale._assets_pos': [
             'pos_shortcuts/static/src/js/product_shortcuts.js',
             'pos_shortcuts/static/src/js/payment_shortcuts.js',
+            'pos_shortcuts/static/src/js/ReceiptScreen.js',
         ],
     },
     'installable': True,
