@@ -1,9 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_mavazi_product_template,access_mavazi_product_template,product.model_product_template,,1,1,1,1
-access_mavazi_purchase_order,access_mavazi_purchase_order,purchase.model_purchase_order,,1,1,1,1
-access_mavazi_purchase_order_line,access_mavazi_purchase_order_line,purchase.model_purchase_order_line,,1,1,1,1
-access_mavazi_sale_order_line,access_mavazi_sale_order_line,sale.model_sale_order_line,,1,1,1,1
-access_mavazi_pos_order_line,access_mavazi_pos_order_line,point_of_sale.model_pos_order_line,,1,1,1,1
-access_consignment_return,access_consignment_return,model_consignment_return,,1,1,1,0
-access_consignment_return_line,access_consignment_return_line,model_consignment_return_line,,1,1,1,0
-access_consignment_sales_report_wizard,access_consignment_sales_report_wizard,model_consignment_sales_report_wizard,,1,1,1,1
