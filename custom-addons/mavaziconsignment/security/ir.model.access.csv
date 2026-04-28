@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_consignment_return,access_consignment_return,model_consignment_return,base.group_user,1,1,1,0
+access_consignment_return_line,access_consignment_return_line,model_consignment_return_line,base.group_user,1,1,1,0
+access_consignment_sales_report_wizard,access_consignment_sales_report_wizard,model_consignment_sales_report_wizard,base.group_user,1,1,1,1
+access_consignment_sales_report_line_temp,access_consignment_sales_report_line_temp,model_consignment_sales_report_line_temp,base.group_user,1,1,1,1

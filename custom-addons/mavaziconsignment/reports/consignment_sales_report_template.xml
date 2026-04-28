@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="consignment_sales_report_pdf" model="ir.actions.report">
+            <field name="name">Consignment Sales Report (PDF)</field>
+            <field name="model">consignment.sales.report.wizard</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">mavaziconsignment.report_consignment_sales_template</field>
+            <field name="report_file">mavaziconsignment.report_consignment_sales_template</field>
+            <field name="print_report_name">'Consignment_Sales_%s' % (object.date_from)</field>
+        </record>
+
+        <record id="consignment_sales_report_web" model="ir.actions.report">
+            <field name="name">Consignment Sales Report (Web)</field>
+            <field name="model">consignment.sales.report.wizard</field>
+            <field name="report_type">qweb-html</field>
+            <field name="report_name">mavaziconsignment.report_consignment_sales_template</field>
+        </record>
+
+        <record id="product_template_form_view_inherit_consignment" model="ir.ui.view">
+            <field name="name">product.template.form.inherit.consignment</field>
+            <field name="model">product.template</field>
+            <field name="inherit_id" ref="product.product_template_only_form_view"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='type']" position="after">
+                    <field name="x_is_consignment" widget="boolean_toggle"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="purchase_order_form_inherit_vendor_filter" model="ir.ui.view">
+            <field name="name">purchase.order.form.inherit.vendor.filter</field>
+            <field name="model">purchase.order</field>
+            <field name="inherit_id" ref="purchase.purchase_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='order_line']/list//field[@name='product_id']" position="attributes">
+                    <attribute name="domain">[('seller_ids.partner_id', '=', parent.partner_id)]</attribute>
+                    <attribute name="context">{
+                        'partner_id': parent.partner_id, 
+                        'tree_view_ref': 'product.product_product_tree_view',
+                        'search_default_seller_ids': parent.partner_id
+                    }</attribute>
+                    <attribute name="options">{'no_create': True, 'no_open': True}</attribute>
+                </xpath>
+            </field>
+        </record>
+
+        <template id="report_consignment_sales_template">
+            <t t-call="web.html_container">
+                <t t-call="web.external_layout">
+                    <div class="page" style="font-family: 'Helvetica', 'Arial', sans-serif;">
+                        <div class="oe_structure"/>
+                        
+                        <div class="text-center mb-5">
+                            <h2 style="font-weight: bold; color: #614666; border-bottom: 2px solid #614666; display: inline-block; padding-bottom: 10px;">
+                                Consignment Sales Report
+                            </h2>
+                        </div>
+
+                        <div class="row mt-4 mb-5" id="informations" style="font-size: 14px;">
+                            <div class="col-3 border-start">
+                                <strong class="text-muted">Date From:</strong>
+                                <p class="m-0 fw-bold" t-esc="date_from"/>
+                            </div>
+                            <div class="col-3 border-start">
+                                <strong class="text-muted">Date To:</strong>
+                                <p class="m-0 fw-bold" t-esc="date_to"/>
+                            </div>
+                            <div class="col-3 border-start">
+                                <strong class="text-muted">Vendor:</strong>
+                                <p class="m-0 fw-bold" t-esc="vendor"/>
+                            </div>
+                            <div class="col-3 border-start border-end">
+                                <strong class="text-muted">Product:</strong>
+                                <p class="m-0 fw-bold" t-esc="product"/>
+                            </div>
+                        </div>
+
+                        <table class="table table-sm o_main_table table-striped mt-4">
+                            <thead>
+                                <tr class="text-uppercase" style="background-color: #f8f9fa;">
+                                    <th class="text-start p-2">Vendor</th>
+                                    <th class="text-start p-2">Item Code</th>
+                                    <th class="text-start p-2">Description</th>
+                                    <th class="text-end p-2">Qty</th>
+                                    <th class="text-end p-2">Net Sales</th>
+                                    <th class="text-end p-2">VAT</th>
+                                    <th class="text-end p-2">Gross Sales</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="lines" t-as="l">
+                                    <tr>
+                                        <td class="text-start p-2"><span t-esc="l['vendor_name']"/></td>
+                                        <td class="text-start p-2"><span t-esc="l['item_number']"/></td>
+                                        <td class="text-start p-2"><span t-esc="l['item_name']"/></td>
+                                        <td class="text-end p-2"><span t-esc="l['qty_sold']"/></td>
+                                        <td class="text-end p-2">
+                                            <span t-esc="l['net_sales']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                        </td>
+                                        <td class="text-end p-2">
+                                            <span t-esc="l['vat_amount']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                        </td>
+                                        <td class="text-end p-2">
+                                            <span t-esc="l['gross_amount']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                        <div class="row justify-content-end mt-5">
+                            <div class="col-4">
+                                <table class="table table-sm border-top">
+                                    <tr class="o_total">
+                                        <td class="p-2"><strong>TOTAL GROSS</strong></td>
+                                        <td class="text-end p-2">
+                                            <strong t-esc="totals['gross_amount']" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                    <tr class="text-muted">
+                                        <td class="p-2">Items Sold</td>
+                                        <td class="text-end p-2"><span t-esc="totals['qty_sold']"/></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</odoo>

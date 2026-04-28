@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_mpesa_report_wizard" model="ir.ui.view">
+        <field name="name">mpesa.report.wizard.form</field>
+        <field name="model">mpesa.report.wizard</field>
+        <field name="arch" type="xml">
+            <form string="MPESA Report">
+                <group>
+                    <group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                    <group>
+                        <field name="company_id" groups="base.group_multi_company"/>
+                        <field name="status"/>
+                    </group>
+                </group>
+                <footer>
+                    <button name="action_print_pdf" type="object"
+                            string="Print PDF" class="btn-primary" data-hotkey="q"/>
+                    <button name="action_print_excel" type="object"
+                            string="Export Excel" class="btn-secondary" data-hotkey="w"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_mpesa_report_wizard" model="ir.actions.act_window">
+        <field name="name">MPESA Report</field>
+        <field name="res_model">mpesa.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="action_report_mpesa" model="ir.actions.report">
+        <field name="name">MPESA Report</field>
+        <field name="model">mpesa.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">pos_safaricom.mpesa_report_template</field>
+        <field name="report_file">pos_safaricom.mpesa_report_template</field>
+        <field name="binding_model_id" ref="model_mpesa_report_wizard"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <menuitem id="menu_mpesa_report" 
+              name="MPESA Reports" 
+              parent="point_of_sale.menu_point_rep" 
+              action="action_mpesa_report_wizard" 
+              sequence="10"/>
+
+</odoo>
