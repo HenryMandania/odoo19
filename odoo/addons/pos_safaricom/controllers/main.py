@@ -3,6 +3,9 @@
 from odoo import http
 from odoo.http import request
 from odoo.tools import verify_hash_signed
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class SafaricomController(http.Controller):
@@ -10,7 +13,11 @@ class SafaricomController(http.Controller):
     @http.route('/pos_safaricom/callback', type='http', auth='public', methods=['POST'], csrf=False)
     def mpesa_stk_callback(self, payload=None, **kwargs):
         try:
-            data = request.get_json_data() or {}
+            raw_data = request.httprequest.data
+            data = request.get_json_data(silent=True) or {}
+
+            _logger.info("STK CALLBACK RAW: %s", raw_data)
+            _logger.info("STK CALLBACK JSON: %s", data)
 
             payload = request.httprequest.args.get('payload')
             decoded_payload = verify_hash_signed(
@@ -30,7 +37,18 @@ class SafaricomController(http.Controller):
                 })
 
             pos_config_id = decoded_payload.get('pos_config_id')
-            stk_callback = data.get('Body', {}).get('stkCallback', {})
+
+            stk_callback = (
+                data.get('Body', {})
+                .get('stkCallback', {})
+            )
+
+            if not stk_callback:
+                _logger.warning("EMPTY STK CALLBACK RECEIVED")
+                return request.make_json_response({
+                    "ResultCode": "0",
+                    "ResultDesc": "Ignored"
+                })
 
             payment_method._notify_stk_callback(
                 stk_callback,
@@ -43,6 +61,7 @@ class SafaricomController(http.Controller):
             })
 
         except Exception as e:
+            _logger.exception("STK CALLBACK ERROR")
             return request.make_json_response({
                 "ResultCode": "1",
                 "ResultDesc": str(e)
@@ -51,7 +70,7 @@ class SafaricomController(http.Controller):
     @http.route('/pos_safaricom/confirmation', type='http', auth='public', methods=['POST'], csrf=False)
     def c2b_confirmation_callback(self, payload=None, **kwargs):
         try:
-            data = request.get_json_data() or {}
+            data = request.get_json_data(silent=True) or {}
 
             decoded_payload = verify_hash_signed(
                 request.env["pos.payment.method"].sudo().env,
