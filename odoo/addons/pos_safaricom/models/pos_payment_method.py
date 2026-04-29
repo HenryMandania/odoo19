@@ -129,41 +129,51 @@ class PosPaymentMethod(models.Model):
 
     def _notify_stk_callback(self, stk_callback, pos_config_id=False):
         self.ensure_one()
+
         res_code = stk_callback.get('ResultCode')
         checkout_id = stk_callback.get('CheckoutRequestID')
         merchant_id = stk_callback.get('MerchantRequestID')
-        
+
         payment_successful = (res_code == 0)
         transaction_id = False
         phone_number = False
 
         if payment_successful:
-            meta = {item['Name']: item.get('Value') for item in stk_callback.get('CallbackMetadata', {}).get('Item', []) if 'Name' in item}
+            callback_metadata = stk_callback.get('CallbackMetadata', {}).get('Item', [])
+
+            meta = {
+                item.get('Name'): item.get('Value')
+                for item in callback_metadata
+                if item.get('Name')
+            }
+
             mpesa_id = meta.get('MpesaReceiptNumber')
-            phone_number = str(meta.get('PhoneNumber'))
+            phone_number = meta.get('PhoneNumber')
 
-            existing = self.env['transaction.lipa.na.mpesa'].sudo().search([
-                ('trans_id', '=', mpesa_id)
-            ], limit=1)
+            if mpesa_id:
+                existing = self.env['transaction.lipa.na.mpesa'].sudo().search([
+                    ('trans_id', '=', mpesa_id)
+                ], limit=1)
 
-            if not existing:
-                new_tx = self.env['transaction.lipa.na.mpesa'].sudo().create({
-                    'trans_id': mpesa_id,
-                    'checkout_request_id': checkout_id,
-                    'number': phone_number,
-                    'amount': float(meta.get('Amount')),
-                    'status': 'closed', 
-                    'mode': 'stk_push',
-                    'name': 'STK Push Online',
-                    'company_id': self.company_id.id,
-                    'received_at': fields.Datetime.now(),
-                    'pos_config_id': pos_config_id,
-                })
-                transaction_id = new_tx.trans_id
-            else:
-                transaction_id = existing.trans_id
-                if not existing.pos_config_id and pos_config_id:
-                    existing.sudo().write({'pos_config_id': pos_config_id})
+                if not existing:
+                    new_tx = self.env['transaction.lipa.na.mpesa'].sudo().create({
+                        'trans_id': mpesa_id,
+                        'checkout_request_id': checkout_id,
+                        'number': str(phone_number) if phone_number else False,
+                        'amount': float(meta.get('Amount') or 0.0),
+                        'status': 'closed',
+                        'mode': 'stk_push',
+                        'name': 'STK Push Online',
+                        'company_id': self.company_id.id,
+                        'received_at': fields.Datetime.now(),
+                        'pos_config_id': pos_config_id,
+                    })
+                    transaction_id = new_tx.trans_id
+                else:
+                    transaction_id = existing.trans_id
+
+                    if pos_config_id and not existing.pos_config_id:
+                        existing.sudo().write({'pos_config_id': pos_config_id})
 
         notification_data = {
             'checkout_request_id': checkout_id,
@@ -172,21 +182,24 @@ class PosPaymentMethod(models.Model):
             'transaction_id': transaction_id,
             'phone_number': phone_number,
             'payment_method_id': self.id,
-            'result_desc': stk_callback.get('ResultDesc', '')
+            'result_desc': stk_callback.get('ResultDesc', ''),
         }
+
+        bus = self.env['bus.bus'].sudo()
 
         if pos_config_id:
             channel = f"pos_config_{pos_config_id}"
-            self.env['bus.bus'].sudo()._sendone(channel, 'SAFARICOM_LATEST_RESPONSE', notification_data)
+            bus._sendone(channel, 'SAFARICOM_LATEST_RESPONSE', notification_data)
         else:
             sessions = self.env['pos.session'].sudo().search([
-                ('state', '=', 'opened'), 
+                ('state', '=', 'opened'),
                 ('config_id.payment_method_ids', 'in', self.ids)
             ])
+
             for session in sessions:
                 channel = f"pos_config_{session.config_id.id}"
-                self.env['bus.bus'].sudo()._sendone(channel, 'SAFARICOM_LATEST_RESPONSE', notification_data)
-                
+                bus._sendone(channel, 'SAFARICOM_LATEST_RESPONSE', notification_data)
+
         return True
 
     def reserve_transaction(self, transaction_id, pos_config_id):
