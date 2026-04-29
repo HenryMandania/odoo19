@@ -5,7 +5,7 @@ import logging
 from datetime import datetime
 
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError
 from odoo.tools import hash_sign
 
 _logger = logging.getLogger(__name__)
@@ -14,19 +14,16 @@ TIMEOUT = 30
 class PosPaymentMethod(models.Model):
     _inherit = 'pos.payment.method'
 
-    # --- M-Pesa Credentials ---
     consumer_key = fields.Char(string="Consumer Key")
     consumer_secret = fields.Char(string="Consumer Secret")
     business_short_code = fields.Char(string="Business Short Code")
-    passkey = fields.Char(string="Passkey", help="Used to generate the password for STK Push")
+    passkey = fields.Char(string="Passkey")
     safaricom_test_mode = fields.Boolean(string="Test Mode", default=True)
     safaricom_payment_type = fields.Selection(
         selection=[('mpesa_express', 'M-PESA Express'), ('lipa_na_mpesa', 'Lipa na M-PESA')],
         string="Payment Type",
         default='mpesa_express',
     )
-
-    # --- Odoo POS Integration ---
 
     def _get_payment_terminal_selection(self):
         return super()._get_payment_terminal_selection() + [('safaricom', 'M-Pesa')]
@@ -46,8 +43,6 @@ class PosPaymentMethod(models.Model):
         params += ['safaricom_test_mode', 'safaricom_payment_type', 'business_short_code']
         return params
 
-    # --- Endpoint Helpers ---
-
     def _get_express_stkpush_endpoint(self):
         return 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest' if self.safaricom_test_mode else \
                'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
@@ -63,8 +58,6 @@ class PosPaymentMethod(models.Model):
     def _get_qr_code_endpoint(self):
         return 'https://sandbox.safaricom.co.ke/mpesa/qrcode/v1/generate' if self.safaricom_test_mode else \
                'https://api.safaricom.co.ke/mpesa/qrcode/v1/generate'
-
-    # --- Authentication & Formatting ---
 
     def _get_bearer_token(self):
         self.ensure_one()
@@ -87,10 +80,7 @@ class PosPaymentMethod(models.Model):
             phone = '254' + phone
         return phone
 
-    # --- STK PUSH (M-PESA EXPRESS) LOGIC ---
-
     def mpesa_express_send_payment_request(self, data):
-        """Initializes STK Push. Record is NOT created here to avoid double writing."""
         self.ensure_one()
         try:
             access_token = self._get_bearer_token()
@@ -98,13 +88,12 @@ class PosPaymentMethod(models.Model):
             password = self._get_password(timestamp)
             phone_number = self._format_phone_number(data.get('phone_number', ''))
 
-            # 🔥 UPDATED: Include pos_config_id in the signed hash so it returns in the callback
             signed_payload = hash_sign(
                 self.sudo().env, 
                 "pos_safaricom", 
                 {
                     "payment_method_id": self.id,
-                    "pos_config_id": data.get('pos_config_id') # Received from POS JS
+                    "pos_config_id": data.get('pos_config_id')
                 }, 
                 expiration_hours=6
             )
@@ -128,7 +117,11 @@ class PosPaymentMethod(models.Model):
             result = response.json()
 
             if result.get('ResponseCode') == '0':
-                return {'success': True, 'checkout_request_id': result.get('CheckoutRequestID')}
+                return {
+                    'success': True, 
+                    'checkout_request_id': result.get('CheckoutRequestID'),
+                    'merchant_request_id': result.get('MerchantRequestID')
+                }
 
             return {'error': result.get('errorMessage', 'Push Request Failed')}
         except Exception as e:
@@ -138,13 +131,16 @@ class PosPaymentMethod(models.Model):
         self.ensure_one()
         res_code = stk_callback.get('ResultCode')
         checkout_id = stk_callback.get('CheckoutRequestID')
+        merchant_id = stk_callback.get('MerchantRequestID')
         
         payment_successful = (res_code == 0)
         transaction_id = False
+        phone_number = False
 
         if payment_successful:
             meta = {item['Name']: item.get('Value') for item in stk_callback.get('CallbackMetadata', {}).get('Item', []) if 'Name' in item}
             mpesa_id = meta.get('MpesaReceiptNumber')
+            phone_number = str(meta.get('PhoneNumber'))
 
             existing = self.env['transaction.lipa.na.mpesa'].sudo().search([
                 ('trans_id', '=', mpesa_id)
@@ -154,54 +150,59 @@ class PosPaymentMethod(models.Model):
                 new_tx = self.env['transaction.lipa.na.mpesa'].sudo().create({
                     'trans_id': mpesa_id,
                     'checkout_request_id': checkout_id,
-                    'number': str(meta.get('PhoneNumber')),
+                    'number': phone_number,
                     'amount': float(meta.get('Amount')),
                     'status': 'closed', 
                     'mode': 'stk_push',
                     'name': 'STK Push Online',
                     'company_id': self.company_id.id,
                     'received_at': fields.Datetime.now(),
-                    'pos_config_id': pos_config_id, # 🔥 LINKING THE TILL HERE
+                    'pos_config_id': pos_config_id,
                 })
                 transaction_id = new_tx.trans_id
             else:
                 transaction_id = existing.trans_id
-                # If it exists but has no till linked, link it now
                 if not existing.pos_config_id and pos_config_id:
                     existing.sudo().write({'pos_config_id': pos_config_id})
 
-        # Notify sessions
-        sessions = self.env['pos.session'].search([('state', '=', 'opened'), ('config_id.payment_method_ids', 'in', self.ids)])
-        for session in sessions:
-            session.config_id._notify('SAFARICOM_LATEST_RESPONSE', {
-                'checkout_request_id': checkout_id,
-                'success': payment_successful,
-                'transaction_id': transaction_id
-            })
+        notification_data = {
+            'checkout_request_id': checkout_id,
+            'merchant_request_id': merchant_id,
+            'success': payment_successful,
+            'transaction_id': transaction_id,
+            'phone_number': phone_number,
+            'payment_method_id': self.id,
+            'result_desc': stk_callback.get('ResultDesc', '')
+        }
 
-    # --- C2B (DIRECT TILL) LOGIC ---
+        if pos_config_id:
+            channel = f"pos_config_{pos_config_id}"
+            self.env['bus.bus'].sudo()._sendone(channel, 'SAFARICOM_LATEST_RESPONSE', notification_data)
+        else:
+            sessions = self.env['pos.session'].sudo().search([
+                ('state', '=', 'opened'), 
+                ('config_id.payment_method_ids', 'in', self.ids)
+            ])
+            for session in sessions:
+                channel = f"pos_config_{session.config_id.id}"
+                self.env['bus.bus'].sudo()._sendone(channel, 'SAFARICOM_LATEST_RESPONSE', notification_data)
+                
+        return True
 
     def reserve_transaction(self, transaction_id, pos_config_id):
-        """Uses the Model's action_reserve for strict state control."""
         transaction = self.env['transaction.lipa.na.mpesa'].browse(transaction_id)
         transaction.sudo().action_reserve(session_id=pos_config_id)
         return True
 
     def mark_transaction_used(self, transaction_id, pos_payment_id=False, pos_config_id=False):
-        """Uses the Model's action_close to finalize the transaction."""
         self.ensure_one()
         transaction = self.env['transaction.lipa.na.mpesa'].browse(transaction_id)
-        
-        # Link the POS metadata first
         transaction.sudo().write({
             'pos_payment_id': pos_payment_id,
             'pos_config_id': pos_config_id or transaction.pos_config_id.id,
         })
-        # Execute transition logic
         transaction.sudo().action_close()
         return True
-
-    # --- QR CODE GENERATION ---
 
     def generate_qr_code(self, data):
         self.ensure_one()
@@ -218,7 +219,6 @@ class PosPaymentMethod(models.Model):
             headers = {'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'}
             response = requests.post(self._get_qr_code_endpoint(), json=body, headers=headers, timeout=TIMEOUT)
             result = response.json()
-
             qr_code = result.get('QRCode')
             if not qr_code:
                 return {'error': result.get('errorMessage', 'No QR Code in Safaricom response')}
