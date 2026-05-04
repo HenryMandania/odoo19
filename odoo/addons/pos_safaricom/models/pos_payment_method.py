@@ -8,6 +8,10 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import hash_sign
 
+import logging
+
+_logger = logging.getLogger(__name__)
+
 TIMEOUT = 10
 
 
@@ -179,8 +183,13 @@ class PosPaymentMethod(models.Model):
 
         metadata = {}
         if payment_successful and callback_metadata:
-            metadata = {item['Name']: item.get('Value') for item in callback_metadata.get('Item', []) if 'Name' in item}
+            metadata = {
+                item['Name']: item.get('Value')
+                for item in callback_metadata.get('Item', [])
+                if 'Name' in item
+            }
 
+        # 🔥 KEEP THIS PART EXACTLY AS YOU HAD IT
         notification = {
             'merchant_request_id': merchant_request_id,
             'checkout_request_id': checkout_request_id,
@@ -194,8 +203,34 @@ class PosPaymentMethod(models.Model):
             ('state', '=', 'opened'),
             ('config_id.payment_method_ids', 'in', self.ids),
         ])
+
         for pos_session in active_sessions:
             pos_session.config_id._notify('SAFARICOM_LATEST_RESPONSE', notification)
+
+        # ✅ NOW SAVE (AFTER notifying POS)
+        if payment_successful:
+            try:
+                trans_id = metadata.get('MpesaReceiptNumber')
+
+                if trans_id:
+                    existing = self.env['transaction.lipa.na.mpesa'].search([
+                        ('trans_id', '=', trans_id)
+                    ], limit=1)
+
+                    if not existing:
+                        self.env['transaction.lipa.na.mpesa'].create({
+                            'trans_id': trans_id,
+                            'name': metadata.get('FirstName', ''),
+                            'number': metadata.get('PhoneNumber'),
+                            'amount': float(metadata.get('Amount') or 0),
+                            'received_at': datetime.now(),
+                            'company_id': self.company_id.id,
+                            'pos_config_id': self.config_ids[:1].id if self.config_ids else False,
+                            'status': 'done',
+                            'transaction_type': 'c2b',  # keep your valid value
+                        })
+            except Exception as e:
+                _logger.error("STK SAVE ERROR: %s", e)
 
     def lipa_na_mpesa_register_urls(self):
         """
@@ -243,10 +278,11 @@ class PosPaymentMethod(models.Model):
         except (requests.exceptions.RequestException, ValueError):
             raise UserError(_("Failed to register URLs. Check your credentials and try again."))
 
-    def _create_payment_transaction(self, trans_id, trans_amount, msisdn, name):
-        """Create a payment transaction for the payment"""
+    def _create_payment_transaction(self, trans_id, trans_amount, msisdn, name, transaction_type='c2b'):
+        """Create a payment transaction for the payment (Captures Company and POS info)"""
         self.ensure_one()
 
+        # Prevent double logging
         if (self.env['transaction.lipa.na.mpesa'].search([('trans_id', '=', trans_id)])):
             return
 
@@ -254,12 +290,17 @@ class PosPaymentMethod(models.Model):
             'trans_id': trans_id,
             'name': name,
             'number': msisdn,
-            'amount': int(float(trans_amount)),
+            'amount': float(trans_amount),
             'received_at': datetime.now(),
+            'company_id': self.company_id.id,
+            'pos_config_id': self.config_ids[0].id if self.config_ids else False,
+            'status': 'done',  
+            'transaction_type': transaction_type,
         })
 
         for pos_config in self.config_ids:
-            pos_config._notify('NEW_LIPA_NA_MPESA_TRANSACTION', {})
+            notification_tag = 'NEW_LIPA_NA_MPESA_TRANSACTION' if transaction_type == 'c2b' else 'SAFARICOM_LATEST_RESPONSE'
+            pos_config._notify(notification_tag, {})
 
     def mark_transaction_used(self, transaction_id):
         self.ensure_one()
