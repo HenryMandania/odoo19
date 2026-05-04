@@ -13,10 +13,22 @@ class SafaricomController(http.Controller):
         """
 
         try:
-            data = request.get_json_data()
+            import json
+
+            # 🔥 VPS-safe payload parsing
+            raw_body = request.httprequest.data
+
+            try:
+                data = json.loads(raw_body.decode('utf-8'))
+            except Exception:
+                data = request.get_json_data() or {}
 
             # Verify the signed payload to get the payment method ID
-            decoded_payload = verify_hash_signed(request.env["pos.payment.method"].sudo().env, "pos_safaricom", payload)
+            decoded_payload = verify_hash_signed(
+                request.env["pos.payment.method"].sudo().env,
+                "pos_safaricom",
+                payload
+            )
 
             # Find the specific payment method using the signed payload
             payment_method = request.env['pos.payment.method'].sudo().search([
@@ -24,13 +36,30 @@ class SafaricomController(http.Controller):
             ], limit=1)
 
             if payment_method:
-                payment_method._notify_stk_callback(data.get('Body', {}).get('stkCallback', {}))
-                return request.make_json_response({"ResultCode": "0", "ResultDesc": "Accepted"})
+                stk_callback = data.get('Body', {}).get('stkCallback', {})
 
-            return request.make_json_response({"ResultCode": "1", "ResultDesc": "Error processing callback"})
+                # 🔥 IMPORTANT DEBUG (remove later if needed)
+                request.env.cr.commit()
 
-        except ValueError:
-            return request.make_json_response({"ResultCode": "1", "ResultDesc": "Error processing callback"})
+                payment_method._notify_stk_callback(stk_callback)
+
+                return request.make_json_response({
+                    "ResultCode": "0",
+                    "ResultDesc": "Accepted"
+                })
+
+            return request.make_json_response({
+                "ResultCode": "1",
+                "ResultDesc": "Error processing callback"
+            })
+
+        except Exception as e:
+            # 🔥 prevent silent failures on VPS
+            request.env.cr.rollback()
+            return request.make_json_response({
+                "ResultCode": "1",
+                "ResultDesc": str(e)
+            })
 
     @http.route('/c2b/validation/callback', type="http", auth='public', methods=['POST'], csrf=False)
     def c2b_validation_callback(self, payload):
