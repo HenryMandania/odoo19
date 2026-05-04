@@ -63,7 +63,7 @@
                                     </div>
                                     <div>
                                         <div class="button send_force_done" role="button" title="Force Done" t-on-click="() => this.props.sendForceDone(line)">
-                                            Force done
+                                            Forcedone
                                         </div>
                                         <div t-if="!this.props.isRefundOrder" class="button send_payment_cancel" role="button" title="Cancel Payment Request" t-on-click="() => this.props.sendPaymentCancel(line)">
                                             Cancel

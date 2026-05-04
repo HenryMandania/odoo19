@@ -1,24 +1,25 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 import base64
-import requests
-import logging
 from datetime import datetime
+
+import requests
 
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import hash_sign
 
-_logger = logging.getLogger(__name__)
-TIMEOUT = 30
+TIMEOUT = 10
+
 
 class PosPaymentMethod(models.Model):
     _inherit = 'pos.payment.method'
 
+    # Credentials from Mpesa
     consumer_key = fields.Char(string="Consumer Key")
     consumer_secret = fields.Char(string="Consumer Secret")
     business_short_code = fields.Char(string="Business Short Code")
-    passkey = fields.Char(string="Passkey")
-    safaricom_test_mode = fields.Boolean(string="Test Mode", default=True)
+    passkey = fields.Char(string="Passkey", help="The passkey is used to generate the password for the STK Push")
+    safaricom_test_mode = fields.Boolean(string="Test Mode", default=True, help="Use sandbox environment")
     safaricom_payment_type = fields.Selection(
         selection=[('mpesa_express', 'M-PESA Express'), ('lipa_na_mpesa', 'Lipa na M-PESA')],
         string="Payment Type",
@@ -30,11 +31,13 @@ class PosPaymentMethod(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        """Override create to automatically register URLs for Lipa na M-PESA payment methods"""
         payment_methods = super().create(vals_list)
+
         for payment_method in payment_methods:
-            if (payment_method.use_payment_terminal == 'safaricom' and 
-                payment_method.safaricom_payment_type == 'lipa_na_mpesa'):
+            if (payment_method.use_payment_terminal == 'safaricom' and payment_method.safaricom_payment_type == 'lipa_na_mpesa'):
                 payment_method.lipa_na_mpesa_register_urls()
+
         return payment_methods
 
     @api.model
@@ -44,213 +47,263 @@ class PosPaymentMethod(models.Model):
         return params
 
     def _get_express_stkpush_endpoint(self):
-        return 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest' if self.safaricom_test_mode else \
-               'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
+        """STK Push endpoint"""
+        if self.safaricom_test_mode:
+            return 'https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
+        return 'https://api.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
 
     def _get_oauth_endpoint(self):
-        return 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials' if self.safaricom_test_mode else \
-               'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
+        """OAuth endpoint to get access token"""
+        if self.safaricom_test_mode:
+            return 'https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
+        return 'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
 
     def _get_lipa_na_mpesa_register_endpoint(self):
-        return 'https://sandbox.safaricom.co.ke/mpesa/c2b/v2/registerurl' if self.safaricom_test_mode else \
-               'https://api.safaricom.co.ke/mpesa/c2b/v2/registerurl'
+        if self.safaricom_test_mode:
+            return 'https://sandbox.safaricom.co.ke/mpesa/c2b/v2/registerurl'
+        return 'https://api.safaricom.co.ke/mpesa/c2b/v2/registerurl'
 
     def _get_qr_code_endpoint(self):
-        return 'https://sandbox.safaricom.co.ke/mpesa/qrcode/v1/generate' if self.safaricom_test_mode else \
-               'https://api.safaricom.co.ke/mpesa/qrcode/v1/generate'
+        if self.safaricom_test_mode:
+            return 'https://sandbox.safaricom.co.ke/mpesa/qrcode/v1/generate'
+        return 'https://api.safaricom.co.ke/mpesa/qrcode/v1/generate'
 
     def _get_bearer_token(self):
+        """Get OAuth access token"""
         self.ensure_one()
+
         if not self.consumer_key or not self.consumer_secret:
-            raise UserError(_("Credentials are required for Safaricom M-Pesa"))
+            raise UserError(_("Consumer Key and Consumer Secret are required for Safaricom M-Pesa"))
+
         try:
-            auth = requests.auth.HTTPBasicAuth(self.consumer_key.strip(), self.consumer_secret.strip())
+            consumer_key = self.consumer_key.strip()
+            consumer_secret = self.consumer_secret.strip()
+
+            auth = requests.auth.HTTPBasicAuth(consumer_key, consumer_secret)
             response = requests.get(self._get_oauth_endpoint(), auth=auth, timeout=TIMEOUT)
+
             response.raise_for_status()
-            return response.json().get('access_token')
-        except Exception:
+
+            data = response.json()
+            access_token = data.get('access_token')
+
+            if not access_token:
+                raise UserError(_("Failed to retrieve access token from Safaricom"))
+
+            return access_token
+
+        except requests.exceptions.RequestException:
             raise UserError(_("Failed to retrieve access token from Safaricom"))
 
     def _get_password(self, timestamp):
+        """Generate password for STK Push"""
         return base64.b64encode(f"{self.business_short_code}{self.passkey}{timestamp}".encode()).decode()
 
     def _format_phone_number(self, phone):
+        """Format phone number to Safaricom format (254XXXXXXXXX)"""
         phone = ''.join(filter(str.isdigit, phone)).lstrip('0')
+
+        # Add country code if not present
         if not phone.startswith('254'):
             phone = '254' + phone
         return phone
 
     def mpesa_express_send_payment_request(self, data):
+        """Send STK Push payment request to customer's phone"""
         self.ensure_one()
+
         try:
             access_token = self._get_bearer_token()
             timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
             password = self._get_password(timestamp)
+
             phone_number = self._format_phone_number(data.get('phone_number', ''))
 
-            signed_payload = hash_sign(
-                self.sudo().env, 
-                "pos_safaricom", 
-                {
-                    "payment_method_id": self.id,
-                    "pos_config_id": data.get('pos_config_id')
-                }, 
-                expiration_hours=6
-            )
+            if not phone_number:
+                return {'error': _("Invalid phone number format. Please use format: 2547XXXXXXXX")}
+
+            signed_hash_payload = hash_sign(self.sudo().env, "pos_safaricom", {"payment_method_id": self.id}, expiration_hours=6)
 
             payload = {
                 'BusinessShortCode': self.business_short_code,
                 'Password': password,
                 'Timestamp': timestamp,
                 'TransactionType': 'CustomerPayBillOnline',
-                'Amount': int(float(data.get('amount', 0))),
+                'Amount': int(data.get('amount', 0)),
                 'PartyA': phone_number,
                 'PartyB': self.business_short_code,
                 'PhoneNumber': phone_number,
-                'CallBackURL': f"{self.get_base_url()}/pos_safaricom/callback?payload={signed_payload}",
+                'CallBackURL': f"{self.get_base_url()}/pos_safaricom/callback?payload={signed_hash_payload}",
                 'AccountReference': data.get('account_reference', 'POS Payment'),
-                'TransactionDesc': 'Payment',
+                'TransactionDesc': data.get('transaction_desc', 'Payment'),
+                }
+
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json',
             }
 
-            response = requests.post(self._get_express_stkpush_endpoint(), json=payload,
-                                     headers={'Authorization': f'Bearer {access_token}'}, timeout=TIMEOUT)
+            response = requests.post(
+                self._get_express_stkpush_endpoint(),
+                json=payload,
+                headers=headers,
+                timeout=TIMEOUT,
+            )
+
             result = response.json()
 
             if result.get('ResponseCode') == '0':
                 return {
-                    'success': True, 
+                    'success': False,  # Not successful yet, waiting for customer confirmation
                     'checkout_request_id': result.get('CheckoutRequestID'),
-                    'merchant_request_id': result.get('MerchantRequestID')
+                    'merchant_request_id': result.get('MerchantRequestID'),
+                    'message': result.get('CustomerMessage', 'Payment request sent to customer phone'),
                 }
 
-            return {'error': result.get('errorMessage', 'Push Request Failed')}
-        except Exception as e:
-            return {'error': str(e)}
-
-    def _notify_stk_callback(self, stk_callback, pos_config_id=False):
-        self.ensure_one()
-
-        res_code = stk_callback.get('ResultCode')
-        checkout_id = stk_callback.get('CheckoutRequestID')
-        merchant_id = stk_callback.get('MerchantRequestID')
-
-        payment_successful = (res_code == 0)
-        transaction_id = False
-        phone_number = False
-
-        if payment_successful:
-            callback_metadata = stk_callback.get('CallbackMetadata', {}).get('Item', [])
-
-            meta = {
-                item.get('Name'): item.get('Value')
-                for item in callback_metadata
-                if item.get('Name')
+            return {
+                'error': result.get('errorMessage') or result.get('CustomerMessage', 'Payment request failed'),
             }
 
-            mpesa_id = meta.get('MpesaReceiptNumber')
-            phone_number = meta.get('PhoneNumber')
+        except (requests.exceptions.RequestException, ValueError) as e:
+            return {'error': e}
 
-            if mpesa_id:
-                existing = self.env['transaction.lipa.na.mpesa'].sudo().search([
-                    ('trans_id', '=', mpesa_id)
-                ], limit=1)
+    def _notify_stk_callback(self, stk_callback):
+        """Parse an STK Push callback and notify active POS sessions"""
+        self.ensure_one()
 
-                if not existing:
-                    new_tx = self.env['transaction.lipa.na.mpesa'].sudo().create({
-                        'trans_id': mpesa_id,
-                        'checkout_request_id': checkout_id,
-                        'number': str(phone_number) if phone_number else False,
-                        'amount': float(meta.get('Amount') or 0.0),
-                        'status': 'closed',
-                        'mode': 'stk_push',
-                        'name': 'STK Push Online',
-                        'company_id': self.company_id.id,
-                        'received_at': fields.Datetime.now(),
-                        'pos_config_id': pos_config_id,
-                    })
-                    transaction_id = new_tx.trans_id
-                else:
-                    transaction_id = existing.trans_id
+        result_desc = stk_callback.get('ResultDesc')
+        checkout_request_id = stk_callback.get('CheckoutRequestID')
+        merchant_request_id = stk_callback.get('MerchantRequestID')
+        callback_metadata = stk_callback.get('CallbackMetadata', {})
+        payment_successful = (stk_callback.get('ResultCode') == 0)
 
-                    if pos_config_id and not existing.pos_config_id:
-                        existing.sudo().write({'pos_config_id': pos_config_id})
+        metadata = {}
+        if payment_successful and callback_metadata:
+            metadata = {item['Name']: item.get('Value') for item in callback_metadata.get('Item', []) if 'Name' in item}
 
-        notification_data = {
-            'checkout_request_id': checkout_id,
-            'merchant_request_id': merchant_id,
+        notification = {
+            'merchant_request_id': merchant_request_id,
+            'checkout_request_id': checkout_request_id,
+            'result_desc': result_desc,
             'success': payment_successful,
-            'transaction_id': transaction_id,
-            'phone_number': phone_number,
-            'payment_method_id': self.id,
-            'result_desc': stk_callback.get('ResultDesc', ''),
+            'transaction_id': metadata.get('MpesaReceiptNumber', ''),
+            'phone_number': str(metadata.get('PhoneNumber', '')),
         }
 
-        bus = self.env['bus.bus'].sudo()
+        active_sessions = self.env['pos.session'].search([
+            ('state', '=', 'opened'),
+            ('config_id.payment_method_ids', 'in', self.ids),
+        ])
+        for pos_session in active_sessions:
+            pos_session.config_id._notify('SAFARICOM_LATEST_RESPONSE', notification)
 
-        if pos_config_id:
-            channel = f"pos_config_{pos_config_id}"
-            bus._sendone(channel, 'SAFARICOM_LATEST_RESPONSE', notification_data)
-        else:
-            sessions = self.env['pos.session'].sudo().search([
-                ('state', '=', 'opened'),
-                ('config_id.payment_method_ids', 'in', self.ids)
-            ])
+    def lipa_na_mpesa_register_urls(self):
+        """
+        Register C2B URLs for Lipa na M-PESA
+        The ValidationURL is the URL that will be called to validate the payment before charges the customer if business has activated it.
+        The ConfirmationURL is the URL that will be called when the payment is successful or unsuccessful.
+        The ResponseType is set to Completed to charge the customer even if the ValidationURL returns an error or is unreachable.
 
-            for session in sessions:
-                channel = f"pos_config_{session.config_id.id}"
-                bus._sendone(channel, 'SAFARICOM_LATEST_RESPONSE', notification_data)
-
-        return True
-
-    def reserve_transaction(self, transaction_id, pos_config_id):
-        transaction = self.env['transaction.lipa.na.mpesa'].browse(transaction_id)
-        transaction.sudo().action_reserve(session_id=pos_config_id)
-        return True
-
-    def mark_transaction_used(self, transaction_id, pos_payment_id=False, pos_config_id=False):
+        This is a one-time API call. URLs should only be registered once unless force_register is True.
+        """
         self.ensure_one()
-        transaction = self.env['transaction.lipa.na.mpesa'].browse(transaction_id)
-        transaction.sudo().write({
-            'pos_payment_id': pos_payment_id,
-            'pos_config_id': pos_config_id or transaction.pos_config_id.id,
-        })
-        transaction.sudo().action_close()
-        return True
 
-    def generate_qr_code(self, data):
-        self.ensure_one()
         try:
             access_token = self._get_bearer_token()
+
+            payload_hash = {
+                "payment_method_id": self.id,
+            }
+
+            signed_hash_payload = hash_sign(self.sudo().env, "pos_safaricom", payload_hash, expiration_hours=6)
+
+            payload = {
+                'ShortCode': self.business_short_code,
+                'ResponseType': 'Completed',
+                'ValidationURL': f"{self.get_base_url()}/c2b/validation/callback?payload={signed_hash_payload}",
+                'ConfirmationURL': f"{self.get_base_url()}/c2b/confirmation/callback?payload={signed_hash_payload}",
+            }
+
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json',
+            }
+
+            response = requests.post(
+                self._get_lipa_na_mpesa_register_endpoint(),
+                json=payload,
+                headers=headers,
+                timeout=TIMEOUT,
+            )
+            result = response.json()
+
+            if result.get('ResponseCode') != '00000000':
+                raise UserError(_("Failed to register URLs"))
+
+        except (requests.exceptions.RequestException, ValueError):
+            raise UserError(_("Failed to register URLs. Check your credentials and try again."))
+
+    def _create_payment_transaction(self, trans_id, trans_amount, msisdn, name):
+        """Create a payment transaction for the payment"""
+        self.ensure_one()
+
+        if (self.env['transaction.lipa.na.mpesa'].search([('trans_id', '=', trans_id)])):
+            return
+
+        self.env['transaction.lipa.na.mpesa'].create({
+            'trans_id': trans_id,
+            'name': name,
+            'number': msisdn,
+            'amount': int(float(trans_amount)),
+            'received_at': datetime.now(),
+        })
+
+        for pos_config in self.config_ids:
+            pos_config._notify('NEW_LIPA_NA_MPESA_TRANSACTION', {})
+
+    def mark_transaction_used(self, transaction_id):
+        self.ensure_one()
+
+        transaction = self.env['transaction.lipa.na.mpesa'].browse(transaction_id)
+        if transaction.exists():
+            transaction.unlink()
+
+    def generate_qr_code(self, data):
+        """Generate QR Code for Lipa na M-PESA with all informations needed to pay"""
+        self.ensure_one()
+
+        try:
+            access_token = self._get_bearer_token()
+
             body = {
                 'MerchantName': data.get('name', self.company_id.name),
-                'RefNo': data.get('ref', 'POS-Order'),
+                'RefNo': data.get('ref', ''),
                 'Amount': data.get('amount', 0),
                 'TrxCode': data.get('trxCode', 'BG'),
                 'CPI': data.get('cpi', self.business_short_code),
                 'Size': data.get('size', '300'),
             }
-            headers = {'Authorization': f'Bearer {access_token}', 'Content-Type': 'application/json'}
-            response = requests.post(self._get_qr_code_endpoint(), json=body, headers=headers, timeout=TIMEOUT)
+
+            headers = {
+                'Authorization': f'Bearer {access_token}',
+                'Content-Type': 'application/json',
+            }
+
+            response = requests.post(
+                self._get_qr_code_endpoint(),
+                json=body,
+                headers=headers,
+                timeout=TIMEOUT,
+            )
+
             result = response.json()
+
             qr_code = result.get('QRCode')
             if not qr_code:
-                return {'error': result.get('errorMessage', 'No QR Code in Safaricom response')}
-            return qr_code
-        except Exception as e:
-            return {'error': str(e)}
+                error_msg = result.get('errorMessage', 'No QR Code in response')
+                return {'error': error_msg}
 
-    def lipa_na_mpesa_register_urls(self):
-        self.ensure_one()
-        try:
-            access_token = self._get_bearer_token()
-            signed_payload = hash_sign(self.sudo().env, "pos_safaricom", {"payment_method_id": self.id}, expiration_hours=6)
-            payload = {
-                'ShortCode': self.business_short_code,
-                'ResponseType': 'Completed',
-                'ValidationURL': f"{self.get_base_url()}/pos_safaricom/validation?payload={signed_payload}",
-                'ConfirmationURL': f"{self.get_base_url()}/pos_safaricom/confirmation?payload={signed_payload}",
-            }
-            requests.post(self._get_lipa_na_mpesa_register_endpoint(), json=payload,
-                          headers={'Authorization': f'Bearer {access_token}'}, timeout=TIMEOUT)
-        except Exception:
-            _logger.error("Failed to register M-Pesa C2B URLs")
+            return qr_code
+
+        except (requests.exceptions.RequestException, ValueError) as e:
+            return {'error': e}

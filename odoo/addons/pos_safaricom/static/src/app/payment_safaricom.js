@@ -37,6 +37,7 @@ export class PaymentSafaricom extends PaymentInterface {
             return false;
         }
         paymentLine.uiState = paymentLine.uiState || {};
+        // Store the IDs from Safaricom for matching with callback
         if (response.checkout_request_id) {
             paymentLine.uiState.safaricom_checkout_request_id = response.checkout_request_id;
         }
@@ -54,8 +55,10 @@ export class PaymentSafaricom extends PaymentInterface {
             return Promise.resolve(false);
         }
 
+        // Get default phone number from customer if available
         const defaultPhone = order.partner?.phone || "";
 
+        // Prompt user to enter phone number
         const phoneNumber = await makeAwaitable(this.env.services.dialog, TextInputPopup, {
             title: _t("M-Pesa Phone Number"),
             placeholder: "254712345678",
@@ -75,7 +78,6 @@ export class PaymentSafaricom extends PaymentInterface {
             account_reference: order.name || order.uuid,
             transaction_desc: `Payment for ${order.name || "Order"}`,
             checkout_request_id: line.uuid,
-            pos_config_id: this.pos.config.id, // 🔥 FIXED: Added this line
         };
 
         return this._call_safaricom(data, "mpesa_express_send_payment_request").then((data) =>
@@ -85,10 +87,12 @@ export class PaymentSafaricom extends PaymentInterface {
 
     waitForPaymentConfirmation(paymentLine) {
         return new Promise((resolve) => {
+            // Store resolver to be called from callback
             this.paymentLineResolvers[paymentLine.uuid] = resolve;
         });
     }
 
+    // Method to complete payment from callback
     completePayment(paymentLine, success) {
         const resolver = this.paymentLineResolvers[paymentLine.uuid];
         if (resolver) {
@@ -124,14 +128,19 @@ export class PaymentSafaricom extends PaymentInterface {
             this._show_error(_t("Payment line not found"));
             return false;
         }
+
         if (line.amount < 0) {
             this._show_error(_t("Cannot process transactions with negative amount."));
             return false;
         }
+
         if (!Number.isInteger(line.amount)) {
-            this._show_error(_t("Cannot process transactions with float numbers. Round it please."));
+            this._show_error(
+                _t("Cannot process transactions with float numbers. Round it please.")
+            );
             return false;
         }
+
         return true;
     }
 
@@ -157,12 +166,14 @@ export class PaymentSafaricom extends PaymentInterface {
             return false;
         }
 
+        // Set QR payment data for customer display
         line.qrPaymentData = {
             name: this.payment_method_id.name,
             amount: this.pos.env.utils.formatCurrency(line.amount),
             qrCode: "data:image/png;base64," + qrCode,
         };
 
+        // Update customer display to show the QR code
         if (this.pos.customerDisplay) {
             this.pos.customerDisplay.update();
         }
@@ -171,7 +182,9 @@ export class PaymentSafaricom extends PaymentInterface {
             const transaction = await makeAwaitable(
                 this.env.services.dialog,
                 MpesaTransactionPopup,
-                { qrCode: qrCode }
+                {
+                    qrCode: qrCode,
+                }
             );
 
             if (!transaction) {
@@ -184,11 +197,12 @@ export class PaymentSafaricom extends PaymentInterface {
             line.cardholder_name = transaction.phone;
             line.setPaymentStatus("done");
 
-            // 🔥 Note: For C2B, we pass transaction.id which is the database ID
+            // Mark transaction as used by deleting it from the database
             await this._call_safaricom(transaction.id, "mark_transaction_used");
 
             return true;
         } finally {
+            // Clear QR payment data from customer display
             line.qrPaymentData = null;
             if (this.pos.customerDisplay) {
                 this.pos.customerDisplay.update();

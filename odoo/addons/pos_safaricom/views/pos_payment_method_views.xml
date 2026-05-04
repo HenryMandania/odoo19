@@ -6,6 +6,7 @@
         <field name="inherit_id" ref="point_of_sale.pos_payment_method_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='use_payment_terminal']" position="after">
+                <!-- Safaricom M-Pesa -->
                 <group colspan="2" col="2" invisible="use_payment_terminal != 'safaricom'">
                     <group>
                         <field name="safaricom_test_mode" widget="boolean_toggle"/>
@@ -15,24 +16,25 @@
                         <field name="business_short_code" required="use_payment_terminal == 'safaricom'"/>
                         <field name="passkey" password="True" invisible="safaricom_payment_type != 'mpesa_express'" required="use_payment_terminal == 'safaricom' and safaricom_payment_type == 'mpesa_express'"/>
                     </group>
+                    <separator string="Lipa na M-PESA Configuration" invisible="safaricom_payment_type != 'lipa_na_mpesa'"/>
+                    <!-- Lipa na M-PESA URL Registration -->
+                    <group colspan="2" col="2" invisible="safaricom_payment_type != 'lipa_na_mpesa'">
+                        <div class="text-muted">
+                            C2B callback URLs must be registered with Safaricom for Lipa na M-PESA to work.
+                            This happens automatically on creation, but you can re-register if you deleted them from the business portal.
+                        </div>
+                    </group>
+                    <group colspan="2" col="1" invisible="safaricom_payment_type != 'lipa_na_mpesa'">
+                        <button name="lipa_na_mpesa_register_urls"
+                                    string="Register URLs"
+                                    type="object"
+                                    class="btn-secondary"
+                                    icon="fa-refresh"
+                                    invisible="id == False"
+                                    help="Register or re-register C2B callback URLs with Safaricom"/>
+                    </group>
                 </group>
             </xpath>
-        </field>
-    </record>
-
-    <record id="view_transaction_mpesa_list" model="ir.ui.view">
-        <field name="name">transaction.lipa.na.mpesa.list</field>
-        <field name="model">transaction.lipa.na.mpesa</field>
-        <field name="arch" type="xml">
-            <list string="MPESA Transactions" create="false" export_xlsx="true">
-                <field name="received_at"/>
-                <field name="trans_id"/>
-                <field name="name"/>
-                <field name="number"/>
-                <field name="amount" sum="Total Amount"/>
-                <field name="status" widget="badge" decoration-success="status == 'closed'"/>
-                <field name="company_id" groups="base.group_multi_company"/>
-            </list>
         </field>
     </record>
 </odoo>
