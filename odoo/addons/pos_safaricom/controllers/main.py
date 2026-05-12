@@ -38,7 +38,7 @@ class SafaricomController(http.Controller):
             if payment_method:
                 stk_callback = data.get('Body', {}).get('stkCallback', {})
 
-                # 🔥 IMPORTANT DEBUG (remove later if needed)
+              
                 request.env.cr.commit()
 
                 payment_method._notify_stk_callback(stk_callback)

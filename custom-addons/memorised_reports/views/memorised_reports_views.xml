@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_memorised_reports_dashboard_form" model="ir.ui.view">
+        <field name="name">memorised.reports.dashboard.form</field>
+        <field name="model">memorised.reports.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="Memorised Reports" create="false" edit="false" delete="false">
+                <sheet class="o_form_nosheet">
+                    <field name="name" invisible="1"/>
+
+                    <div style="display: flex; height: calc(100vh - 90px); margin: -16px; overflow: hidden;">
+
+                        <div style="width: 320px; border-right: 1px solid #3f4654; padding: 32px;">
+                            <h2 style="margin-bottom: 30px; font-weight: 600;">Reports</h2>
+
+                            <button name="action_open_item_sales"
+                                    type="object"
+                                    string="Item Sales"
+                                    class="btn btn-link d-block text-start mb-3"/>
+
+                            <button name="action_open_consignment_sales_report"
+                                    type="object"
+                                    string="Consignment Sales Report"
+                                    class="btn btn-link d-block text-start mb-3"/>
+
+                            <button name="action_open_consignment_returns"
+                                    type="object"
+                                    string="Consignment Returns"
+                                    class="btn btn-link d-block text-start mb-3"/>
+
+                            <button name="action_open_merchandizer_sales_report"
+                                    type="object"
+                                    string="Merchandizer Sales Analysis"
+                                    class="btn btn-link d-block text-start mb-3"/>
+                        </div>
+
+                        <div style="flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center;">
+
+                            <h1 style="font-size: 56px; font-weight: 700; margin-bottom: 16px;">
+                                Safeway Hypermarkets Ltd
+                            </h1>
+
+                            <h2 style="font-size: 30px; font-weight: 400; color: #9ca3af;">
+                                Mavazi by Safeway Reports
+                            </h2>
+
+                        </div>
+
+                    </div>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_memorised_reports_dashboard" model="ir.actions.act_window">
+        <field name="name">Memorised Reports</field>
+        <field name="res_model">memorised.reports.dashboard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_memorised_reports_dashboard_form"/>
+        <field name="target">current</field>
+        <field name="context">{'default_name': 'Mavazi by Safeway Reports'}</field>
+    </record>
+
+    <menuitem id="menu_memorised_reports_root"
+              name="Memorised Reports"
+              action="action_memorised_reports_dashboard"
+              web_icon="memorised_reports,static/description/icon.png"
+              sequence="5"/>
+
+    <menuitem id="menu_mavazi_by_safeway_reports"
+              name="Mavazi by Safeway Reports"
+              parent="menu_memorised_reports_root"
+              sequence="10"/>
+
+    <menuitem id="menu_memorised_item_sales_report"
+              name="Item Sales"
+              parent="menu_mavazi_by_safeway_reports"
+              action="action_memorised_item_sales_report"
+              sequence="10"/>
+
+    <menuitem id="menu_memorised_consignment_sales_report"
+              name="Consignment Sales Report"
+              parent="menu_mavazi_by_safeway_reports"
+              action="mavaziconsignment.action_consignment_sales_report_wizard"
+              sequence="20"/>
+
+    <menuitem id="menu_memorised_consignment_return"
+              name="Consignment Returns"
+              parent="menu_mavazi_by_safeway_reports"
+              action="mavaziconsignment.action_consignment_return"
+              sequence="30"/>
+
+    <menuitem id="menu_memorised_merchandizer_report"
+              name="Merchandizer Sales Analysis"
+              parent="menu_mavazi_by_safeway_reports"
+              action="merchandizersales.action_merchandizer_report_wizard"
+              sequence="40"/>
+
+</odoo>

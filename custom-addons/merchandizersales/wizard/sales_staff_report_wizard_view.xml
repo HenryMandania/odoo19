@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sales_staff_report_wizard_form" model="ir.ui.view">
+        <field name="name">sales.staff.report.wizard.form</field>
+        <field name="model">sales.staff.report.wizard</field>
+        <field name="arch" type="xml">
+            <form>
+                <group>
+                    <group>
+                        <field name="date_from"/>
+                        <field name="date_to"/>
+                    </group>
+                    <group>
+                        <field name="report_type" widget="radio"/>
+                    </group>
+                </group>
+                <group>
+                    <field name="staff_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                    <field name="product_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                </group>
+                <footer>
+                    <button name="action_print_pdf" string="Print PDF" type="object" class="btn-primary"/>
+                    <button name="action_review_web" string="View Web" type="object" class="btn-secondary"/>
+                    <button name="action_view_raw_data" string="Export CSV" type="object" class="btn-secondary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

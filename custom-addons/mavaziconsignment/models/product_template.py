@@ -33,11 +33,11 @@ class ProductTemplate(models.Model):
             
             if product.x_is_consignment:
                 if force_tracking:
-                    product.type = 'consu' # Storable Product
+                    product.type = 'product'  # Storable Product
                     product.tracking = 'lot'  # By Lots
                 else:
                     product.type = 'consu'    # Consumable
                     product.tracking = 'none' # No Tracking
             else:
                 # Default back to Storable when consignment is off
-               product.type = 'consu'
+                product.type = 'product'

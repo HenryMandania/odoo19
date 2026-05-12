@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_sales_staff_template">
+        <t t-call="web.html_container">
+            <t t-call="web.basic_layout">
+                <div class="page" style="font-family: 'Helvetica', sans-serif; color: #333; padding: 20px;">
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <img t-if="res_company.logo" t-att-src="image_data_uri(res_company.logo)" 
+                                 style="max-height: 85px;" alt="MAVAZI Logo"/>
+                            <div class="mt-2" style="font-size: 14px; line-height: 1.3;">
+                                <strong t-field="res_company.name"/><br/>
+                                <span t-field="res_company.country_id.name"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center" style="margin-top: 40px; margin-bottom: 30px;">
+                        <h2 style="color: #6a4d8a; font-weight: normal; font-size: 32px;">
+                            Sales Staff <t t-esc="data.get('report_type', 'Summary').capitalize()"/>
+                        </h2>
+                        <h5 style="font-weight: normal; margin-top: 10px;">
+                            Period: <span t-esc="data.get('date_from', 'N/A')"/> to <span t-esc="data.get('date_to', 'N/A')"/>
+                        </h5>
+                    </div>
+
+                    <div style="border: 1px solid #dee2e6; padding: 12px 20px; margin-bottom: 25px; display: flex; justify-content: space-between; font-size: 14px; background: #fff;">
+                        <div><strong>Staff:</strong> <span t-esc="filters.get('staff', 'All Staff')"/></div>
+                        <div><strong>Products:</strong> <span t-esc="filters.get('products', 'All Products')"/></div>
+                    </div>
+
+                    <table class="table table-sm" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #000; font-size: 14px;">
+                                <th class="text-start" style="width: 10%;">Code</th>
+                                <th class="text-start" style="width: 20%;">Name</th>
+                                <t t-if="data.get('report_type') == 'itemized'">
+                                    <th class="text-start" style="width: 15%;">Item No_</th>
+                                    <th class="text-start" style="width: 40%;">Item Description</th>
+                                    <th class="text-end" style="width: 15%;">Qty Sold</th>
+                                </t>
+                                <t t-else="">
+                                    <th class="text-end" style="width: 23%;">Net</th>
+                                    <th class="text-end" style="width: 23%;">Tax</th>
+                                    <th class="text-end" style="width: 24%;">Gross</th>
+                                </t>
+                            </tr>
+                        </thead>
+                        <tbody style="font-size: 13px;">
+                            <t t-foreach="lines" t-as="staff_group">
+                                <t t-if="data.get('report_type') == 'itemized'">
+                                    <t t-foreach="staff_group['products']" t-as="product">
+                                        <tr style="border-bottom: 1px solid #eee;">
+                                            <td><span t-esc="staff_group['code']"/></td>
+                                            <td><span t-esc="staff_group['name']"/></td>
+                                            <td><span t-esc="product['ref']"/></td>
+                                            <td><span t-esc="product['name']"/></td>
+                                            <td class="text-end"><span t-esc="product['qty']"/></td>
+                                        </tr>
+                                    </t>
+                                </t>
+                                <t t-else="">
+                                    <tr style="border-bottom: 1px solid #eee;">
+                                        <td><span t-esc="staff_group.get('code', 'N/A')"/></td>
+                                        <td><span t-esc="staff_group.get('name')"/></td>
+                                        <td class="text-end">
+                                            <span t-esc="staff_group.get('net')" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-esc="staff_group.get('tax')" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                        </td>
+                                        <td class="text-end">
+                                            <span t-esc="staff_group.get('gross')" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </t>
+                        </tbody>
+                        <tfoot style="border-top: 2px solid #000; font-weight: bold; font-size: 14px;">
+                            <tr>
+                                <td colspan="2" class="text-end" style="padding-top: 10px;">Grand Totals:</td>
+                                <t t-if="data.get('report_type') == 'itemized'">
+                                    <td class="text-end" colspan="3" style="padding-top: 10px;">
+                                        <span t-esc="totals.get('qty', 0.0)"/> Units
+                                    </td>
+                                </t>
+                                <t t-else="">
+                                    <td class="text-end" style="padding-top: 10px;">
+                                        <span t-esc="totals.get('net', 0.0)" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                    </td>
+                                    <td class="text-end" style="padding-top: 10px;">
+                                        <span t-esc="totals.get('tax', 0.0)" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                    </td>
+                                    <td class="text-end" style="padding-top: 10px;">
+                                        <span t-esc="totals.get('gross', 0.0)" t-options='{"widget": "monetary", "display_currency": res_company.currency_id}'/>
+                                    </td>
+                                </t>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </t>
+        </t>
+    </template>
+</odoo>

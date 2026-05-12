@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_merchandizer_pdf" model="ir.actions.report">
+        <field name="name">Merchandizer Sales Report (PDF)</field>
+        <field name="model">sales.staff.report.wizard</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">merchandizersales.report_sales_staff_template</field>
+        <field name="report_file">merchandizersales.report_sales_staff_template</field>
+        <field name="binding_model_id" ref="merchandizersales.model_sales_staff_report_wizard"/>
+    </record>
+
+    <record id="action_report_merchandizer_web" model="ir.actions.report">
+        <field name="name">Merchandizer Sales Report (Web)</field>
+        <field name="model">sales.staff.report.wizard</field>
+        <field name="report_type">qweb-html</field>
+        <field name="report_name">merchandizersales.report_sales_staff_template</field>
+    </record>
+
+    <record id="action_merchandizer_report_wizard" model="ir.actions.act_window">
+        <field name="name">Merchandizer Sales Report</field>
+        <field name="res_model">sales.staff.report.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
