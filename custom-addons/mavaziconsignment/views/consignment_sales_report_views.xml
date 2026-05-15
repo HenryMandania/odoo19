@@ -43,10 +43,10 @@
           action="action_consignment_sales_report_wizard"
           sequence="10"/>
 
-<!-- Memorised Reports Menu -->
+<!-- Mavazi Reports Menu -->
 <menuitem id="menu_memorised_consignment_sales_report"
           name="Consignment Sales Report"
-          parent="memorised_reports.menu_mavazi_by_safeway_reports"
+          parent="mavazi_reports.menu_mavazi_by_safeway_reports"
           action="action_consignment_sales_report_wizard"
           sequence="30"/>
 </odoo>

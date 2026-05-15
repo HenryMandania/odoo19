@@ -68,10 +68,10 @@
     </record>
 
     <menuitem id="menu_memorised_reports_root"
-              name="Mavazi Reports"
-              action="action_memorised_reports_dashboard"
-              web_icon="mavazi_reports,static/description/icon.png"
-              sequence="5"/>
+          name="Mavazi Reports"
+          action="mavazi_reports.action_memorised_reports_dashboard"
+          web_icon="mavazi_reports,static/description/icon.png"
+          sequence="5"/>
 
     <menuitem id="menu_mavazi_by_safeway_reports"
               name="Mavazi by Safeway Reports"
@@ -79,10 +79,10 @@
               sequence="10"/>
 
     <menuitem id="menu_memorised_item_sales_report"
-              name="Item Sales"
-              parent="menu_mavazi_by_safeway_reports"
-              action="action_memorised_item_sales_report"
-              sequence="10"/>
+          name="Item Sales"
+          parent="menu_mavazi_by_safeway_reports"
+          action="mavazi_reports.action_memorised_item_sales_report"
+          sequence="10"/>
 
     <menuitem id="menu_memorised_consignment_sales_report"
               name="Consignment Sales Report"
@@ -103,9 +103,9 @@
               sequence="40"/>
 
     <menuitem id="menu_memorised_vendor_master_list"
-              name="Vendor Master List"
-              parent="menu_mavazi_by_safeway_reports"
-              action="action_vendor_master_list_wizard"
-              sequence="50"/>
+          name="Vendor Master List"
+          parent="menu_mavazi_by_safeway_reports"
+          action="mavazi_reports.action_vendor_master_list_wizard"
+          sequence="50"/>
 
 </odoo>

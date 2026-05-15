@@ -94,10 +94,10 @@
           action="action_consignment_return"
           sequence="10"/>
 
-<!-- Memorised Reports Menu -->
+<!-- Mavazi Reports Menu -->
 <menuitem id="menu_memorised_consignment_return"
           name="Consignment Returns"
-          parent="memorised_reports.menu_mavazi_by_safeway_reports"
+          parent="mavazi_reports.menu_mavazi_by_safeway_reports"
           action="action_consignment_return"
           sequence="20"/>
 

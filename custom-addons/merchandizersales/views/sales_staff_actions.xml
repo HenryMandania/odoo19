@@ -37,7 +37,7 @@
     <menuitem
         id="menu_memorised_merchandizer_report"
         name="Merchandizer Sales Analysis"
-        parent="memorised_reports.menu_mavazi_by_safeway_reports"
+        parent="mavazi_reports.menu_mavazi_by_safeway_reports"
         action="action_merchandizer_report_wizard"
         sequence="40"/>
 </odoo>
