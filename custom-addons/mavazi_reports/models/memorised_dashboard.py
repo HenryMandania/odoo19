@@ -3,7 +3,7 @@ from odoo import models, fields
 
 class MemorisedReportsDashboard(models.TransientModel):
     _name = 'memorised.reports.dashboard'
-    _description = 'Memorised Reports Dashboard'
+    _description = 'Mavazi Reports Dashboard'
     _rec_name = 'name'
 
     name = fields.Char(
@@ -14,7 +14,7 @@ class MemorisedReportsDashboard(models.TransientModel):
 
     def action_open_item_sales(self):
         return self.env.ref(
-            'memorised_reports.action_memorised_item_sales_report'
+            'mavazi_reports.action_memorised_item_sales_report'
         ).read()[0]
 
     def action_open_consignment_sales_report(self):
@@ -31,8 +31,8 @@ class MemorisedReportsDashboard(models.TransientModel):
         return self.env.ref(
             'merchandizersales.action_merchandizer_report_wizard'
         ).read()[0]
-    
+
     def action_open_vendor_master_list(self):
         return self.env.ref(
-            'memorised_reports.action_vendor_master_list_wizard'
+            'mavazi_reports.action_vendor_master_list_wizard'
         ).read()[0]

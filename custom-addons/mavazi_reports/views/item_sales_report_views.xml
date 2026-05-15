@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <record id="view_memorised_item_sales_report_list" model="ir.ui.view">
-        <field name="name">memorised.item.sales.report.list</field>
+    <record id="view_mavazi_item_sales_report_list" model="ir.ui.view">
+        <field name="name">mavazi.item.sales.report.list</field>
         <field name="model">memorised.item.sales.report</field>
         <field name="arch" type="xml">
             <list string="Item Sales" create="false" edit="false" delete="false">
@@ -18,8 +18,8 @@
         </field>
     </record>
 
-    <record id="view_memorised_item_sales_report_search" model="ir.ui.view">
-        <field name="name">memorised.item.sales.report.search</field>
+    <record id="view_mavazi_item_sales_report_search" model="ir.ui.view">
+        <field name="name">mavazi.item.sales.report.search</field>
         <field name="model">memorised.item.sales.report</field>
         <field name="arch" type="xml">
             <search>
@@ -55,8 +55,8 @@
         </field>
     </record>
 
-    <record id="view_memorised_item_sales_report_pivot" model="ir.ui.view">
-        <field name="name">memorised.item.sales.report.pivot</field>
+    <record id="view_mavazi_item_sales_report_pivot" model="ir.ui.view">
+        <field name="name">mavazi.item.sales.report.pivot</field>
         <field name="model">memorised.item.sales.report</field>
         <field name="arch" type="xml">
             <pivot string="Item Sales Analysis">
@@ -74,7 +74,7 @@
         <field name="name">Item Sales</field>
         <field name="res_model">memorised.item.sales.report</field>
         <field name="view_mode">list,pivot</field>
-        <field name="search_view_id" ref="view_memorised_item_sales_report_search"/>
+        <field name="search_view_id" ref="view_mavazi_item_sales_report_search"/>
         <field name="context">{'search_default_group_product': 1}</field>
     </record>
 

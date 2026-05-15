@@ -7,7 +7,8 @@ class VendorMasterListWizard(models.TransientModel):
 
     supplier_ids = fields.Many2many(
         'res.partner',
-        compute='_compute_supplier_ids'
+        string='Available Vendors',
+        default=lambda self: self._get_available_vendors()
     )
 
     vendor_id = fields.Many2one(
@@ -17,8 +18,8 @@ class VendorMasterListWizard(models.TransientModel):
         domain="[('id', 'in', supplier_ids)]"
     )
 
-    @api.depends()
-    def _compute_supplier_ids(self):
+    @api.model
+    def _get_available_vendors(self):
         supplier_infos = self.env['product.supplierinfo'].search([])
         vendors = supplier_infos.mapped('partner_id')
 
@@ -27,8 +28,7 @@ class VendorMasterListWizard(models.TransientModel):
                 ('supplier_rank', '>', 0)
             ])
 
-        for rec in self:
-            rec.supplier_ids = vendors
+        return vendors
 
     def action_generate_report(self):
         supplier_infos = self.env['product.supplierinfo'].search([
@@ -49,7 +49,7 @@ class VendorMasterListWizard(models.TransientModel):
             'views': [
                 (
                     self.env.ref(
-                        'memorised_reports.view_vendor_master_list_tree'
+                        'mavazi_reports.view_vendor_master_list_tree'
                     ).id,
                     'list'
                 )
