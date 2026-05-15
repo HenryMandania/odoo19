@@ -31,3 +31,8 @@ class MemorisedReportsDashboard(models.TransientModel):
         return self.env.ref(
             'merchandizersales.action_merchandizer_report_wizard'
         ).read()[0]
+    
+    def action_open_vendor_master_list(self):
+        return self.env.ref(
+            'memorised_reports.action_vendor_master_list_wizard'
+        ).read()[0]

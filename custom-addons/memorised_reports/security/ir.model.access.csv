@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_memorised_item_sales_report,access.memorised.item.sales.report,model_memorised_item_sales_report,base.group_user,1,0,0,0
 access_memorised_reports_dashboard,access.memorised.reports.dashboard,model_memorised_reports_dashboard,base.group_user,1,1,1,1
+access_vendor_master_list_wizard,access.vendor.master.list.wizard,model_vendor_master_list_wizard,base.group_user,1,1,1,1

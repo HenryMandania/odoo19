@@ -33,6 +33,11 @@
                                     type="object"
                                     string="Merchandizer Sales Analysis"
                                     class="btn btn-link d-block text-start mb-3"/>
+                                    
+                            <button name="action_open_vendor_master_list"
+                                    type="object"
+                                    string="Vendor Master List"
+                                    class="btn btn-link d-block text-start mb-3"/>
                         </div>
 
                         <div style="flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center;">
@@ -96,5 +101,10 @@
               parent="menu_mavazi_by_safeway_reports"
               action="merchandizersales.action_merchandizer_report_wizard"
               sequence="40"/>
+    <menuitem id="menu_memorised_vendor_master_list"
+          name="Vendor Master List"
+          parent="menu_mavazi_by_safeway_reports"
+          action="action_vendor_master_list_wizard"
+          sequence="50"/>
 
 </odoo>

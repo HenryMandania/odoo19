@@ -13,11 +13,13 @@
         'mavaziconsignment',
         'merchandizersales',
     ],
-    'data': [
-        'security/ir.model.access.csv',
-        'views/item_sales_report_views.xml',
-        'views/memorised_reports_views.xml',
-    ],
+   'data': [
+    'security/ir.model.access.csv',
+    'views/item_sales_report_views.xml',
+    'views/vendor_master_list_views.xml',
+    'wizards/vendor_master_list_wizard_views.xml',
+    'views/memorised_reports_views.xml',
+],
     'installable': True,
     'application': True,
     'license': 'LGPL-3',

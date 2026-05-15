@@ -2,9 +2,9 @@
 <odoo>
     <data>
         <template id="report_simple_label2x7">
-            <t t-set="barcode_size" t-value="'width:33mm;height:14mm'"/>
-            <t t-set="table_style" t-value="'width:97mm;height:37.1mm;' + table_style"/>
-            <td t-att-style="make_invisible and 'visibility:hidden;'" >
+                <t t-set="barcode_size" t-value="'width:45mm;height:12mm'"/>
+                <t t-set="table_style" t-value="'width:106mm;height:45.9mm;padding:2mm;' + table_style"/>
+                            <td t-att-style="make_invisible and 'visibility:hidden;'" >
                 <div class="o_label_full" t-att-style="table_style">
                     <div class="o_label_name">
                         <strong t-field="product.display_name"/>

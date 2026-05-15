@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_vendor_master_list_wizard_form" model="ir.ui.view">
+        <field name="name">vendor.master.list.wizard.form</field>
+        <field name="model">vendor.master.list.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Vendor Master List">
+                <group>
+                    <field name="supplier_ids" invisible="1"/>
+                    <field name="vendor_id" options="{'no_create': True}"/>
+                </group>
+
+                <footer>
+                    <button name="action_generate_report"
+                            type="object"
+                            string="Generate Report"
+                            class="btn-primary"/>
+
+                    <button string="Cancel"
+                            special="cancel"
+                            class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_vendor_master_list_wizard" model="ir.actions.act_window">
+        <field name="name">Vendor Master List</field>
+        <field name="res_model">vendor.master.list.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>
